@@ -1,0 +1,294 @@
+---
+title: "Universo Tidy"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## O que é o Tidyverse?
+
+O **tidyverse** é um *ecossistema de pacotes em R* que compartilham uma **filosofia de design comum** e são usados para **ciência de dados**. Ele foi criado por **Hadley Wickham** e colaboradores, com o objetivo de tornar a manipulação, visualização e modelagem de dados mais **consistente, legível e eficiente**.
+
+<div style="text-align: center;">
+  <img src="images/HadleyWickham.jpg" alt="Hadley Wickham" width="300px">
+</div>
+
+### Características principais
+
+- Usa **tibbles** (uma versão moderna dos data frames) como estrutura central.
+- Favorece uma **sintaxe funcional e encadeada**, geralmente com o operador **pipe (`%>%`)**.
+- Promove dados organizados de forma **tidy**, ou seja:
+
+> *Cada variável em uma coluna, cada observação em uma linha e cada valor em uma célula.*
+
+### 🧠 Curiosidade: O tidyverse também segue o paradigma tidy
+
+Isso significa que:
+- As funções tendem a ter nomes **verbais** e consistentes (`filter()`, `mutate()`, `select()` etc.).
+- O foco é sempre **organizar, transformar e visualizar dados de forma clara**.
+
+## Pacotes principais do tidyverse
+
+```{r}
+# Exibindo os principais pacotes do tidyverse em forma de tabela
+tibble::tibble(
+  Pacote = c("ggplot2", "dplyr", "tidyr", "readr", "tibble", "purrr", "stringr", "forcats"),
+  Função = c(
+    "Visualização de dados",
+    "Manipulação e transformação de dados",
+    "Organização e 'arrumação' dos dados",
+    "Leitura de arquivos retangulares (CSV, etc)",
+    "Versão moderna dos data frames",
+    "Programação funcional com listas e vetores",
+    "Manipulação de strings",
+    "Manipulação de variáveis fator"
+  )
+)
+```
+
+### 🧩 Pacotes adicionais (não carregados automaticamente)
+        
+Esses pacotes **fazem parte da família tidyverse**, mas **não são carregados automaticamente** com `library(tidyverse)`. São usados em contextos mais específicos:
+        
+| Pacote |Função principal|
+|----------------|---------------------------------------------------------------------|
+| **lubridate**  | Manipulação de datas e horas de forma intuitiva|
+| **hms**| Representação de durações de tempo (horas, minutos e segundos)      |
+        | **readxl**     | Leitura de arquivos do Excel (`.xls` e `.xlsx`)                     |
+        | **writexl**    | Escrita de arquivos Excel (`.xlsx`) sem depender de Java            |
+        | **haven**      | Leitura de arquivos de SPSS, Stata e SAS                            |
+        | **xml2**       | Leitura e manipulação de arquivos XML                               |
+        | **rvest**      | Leitura de dados da web (web scraping)                              |
+        | **httr**       | Realização de requisições HTTP para APIs                            |
+        | **jsonlite**   | Leitura e escrita de arquivos JSON                                  |
+        | **modelr**     | Suporte a modelagem integrada a pipelines do tidyverse              |
+        | **tidyverse**  | Metapacote que instala e carrega os principais pacotes do grupo     |
+        
+        ---
+
+## O que são *tibbles*?
+
+Tibbles são uma versão **moderna e aprimorada** dos tradicionais `data.frames` do R. Eles fazem parte do pacote `{tibble}`, que está incluído no `{tidyverse}`.
+
+### Por que usar tibbles?
+
+Tibbles oferecem várias **vantagens práticas** para análise de dados:
+
+- **Impressão amigável**: ao mostrar os dados no console, exibem apenas as primeiras linhas e as colunas que cabem na tela.
+- **Preservam os tipos de dados**: não convertem strings automaticamente em fatores (como o `data.frame` faz por padrão).
+- **Subconjuntos mais seguros**: acessar colunas inexistentes retorna erro em vez de `NULL` silenciosamente.
+- **Integram-se bem com pipes (`%>%`) e funções do tidyverse.**
+
+
+```{r}
+# Criando um data.frame tradicional
+df <- data.frame(
+  nome = c("Ana", "Bruno"),
+  idade = c(22, 25)
+)
+
+# Criando um tibble
+tb <- tibble::tibble(
+  nome = c("Ana", "Bruno"),
+  idade = c(22, 25)
+)
+```
+
+
+### Estrutura de um tibble
+
+```{r}
+str(df)
+str(tb)
+```
+
+Para mostrar a diferença no comportamento de **impressão**, considere um conjunto de dados com muitas linhas e colunas:
+
+```{r}
+# Criando um data.frame grande
+df_grande <- data.frame(
+  id = 1:100,
+  nome = paste("Pessoa", 1:100),
+  idade = sample(18:80, 100, replace = TRUE),
+  cidade = sample(c("Viçosa", "Belo Horizonte", "São Paulo", "Fortaleza"), 100, replace = TRUE),
+  renda = rnorm(100, mean = 3000, sd = 800)
+)
+
+# Convertendo para tibble
+tb_grande <- as_tibble(df_grande)
+```
+
+### Impressão do `data.frame`
+
+```{r}
+print(df_grande)
+```
+
+> ❌ A impressão do `data.frame` mostra **todas as 100 linhas**, o que pode deixar o console poluído e difícil de ler.
+
+### Impressão do `tibble`
+
+```{r}
+print(tb_grande)
+```
+
+## O que é o operador **pipe** (`%>%`)?
+
+O operador `**%>%**`, chamado de **pipe**, é uma ferramenta poderosa que **encadeia operações** de forma sequencial, tornando o código mais legível e fluido. Ele é fornecido pelo pacote `{magrittr}`, que faz parte do `{tidyverse}`.
+
+---
+
+### 💡 Intuição
+
+Em vez de escrever várias funções **uma dentro da outra**, com muitos parênteses, o `pipe` permite **escrever o processo passo a passo**, como em uma receita.
+
+> 📦 Pense no `pipe` como o **"então"**:  
+> Pegue os dados → então filtre → então agrupe → então resuma.
+
+---
+
+### 🆚 Sem o `pipe`
+
+```{r pipe1, exercise = TRUE}
+# Sem usar o pipe
+res <- summarise(
+  group_by(
+    filter(mtcars, mpg > 20),
+    cyl
+  ),
+  media_hp = mean(hp)
+)
+
+res
+```
+
+---
+
+### ✅ Com o `pipe`
+
+```{r pipe2, exercise = TRUE}
+# Usando o pipe
+res <- mtcars %>%
+  filter(mpg > 20) %>%
+  group_by(cyl) %>%
+  summarise(media_hp = mean(hp))
+
+res
+```
+
+> 🔍 Muito mais fácil de ler: "mtcars → filtra os carros com mpg > 20 → agrupa por número de cilindros → calcula a média de hp".
+
+---
+
+### 🧠 Curiosidade:
+
+<p style="text-align: justify;">
+O nome <code>magrittr</code> é uma referência ao artista surrealista <strong>René Magritte</strong>, famoso pela pintura "Ceci n’est pas une pipe" (Isto não é um cachimbo). O nome do pacote é uma brincadeira conceitual com o operador <code>%>%</code>.
+</p>
+
+### 📌 Dica importante
+
+O `pipe` envia **o resultado da esquerda como primeiro argumento** da função da direita. Isso só funciona bem se a função da direita espera esse argumento como **primeiro parâmetro**.
+
+```{r pipe3, exercise = TRUE}
+# Exemplo: usar o objeto como segundo argumento
+rnorm(5, mean = 10)     # sem pipe
+
+5 %>% rnorm(mean = 10)  # com pipe
+```
+
+## O que é o formato **tidy**?
+
+O termo **"tidy"** significa **organizado**. No contexto da ciência de dados com R, dados tidy seguem uma estrutura **padronizada** que facilita a análise, visualização e modelagem.
+
+### 📐 Definição de dados tidy
+
+Segundo Hadley Wickham:
+
+> Dados tidy são aqueles onde:
+>
+> - Cada **variável** está em uma **coluna**  
+> - Cada **observação** está em uma **linha**  
+> - Cada **valor** está em uma **célula**
+
+---
+
+### 🧱 Estrutura tidy — Exemplo
+
+Vamos considerar uma tabela com notas de alunos em diferentes disciplinas:
+
+#### ❌ Dados bagunçados (wide format):
+
+| aluno | mat | port |
+|-------|-----|------|
+| Ana   | 90  | 80   |
+| Bruno | 70  | 85   |
+
+#### ✅ Dados tidy (long format):
+
+| aluno | disciplina | nota |
+|-------|------------|------|
+| Ana   | mat        | 90   |
+| Ana   | port       | 80   |
+| Bruno | mat        | 70   |
+| Bruno | port       | 85   |
+
+---
+
+### ✨ Vantagens dos dados tidy
+
+- Permite usar funções do `{dplyr}`, `{ggplot2}`, `{tidyr}`, etc.
+- Facilita agrupamentos, somas, médias e transformações.
+- É o formato preferido para análise e visualização de dados no `tidyverse`.
+
+---
+
+### Transformando dados wide → tidy com `pivot_longer()`
+
+```{r pivot, exercise = TRUE}
+# Exemplo com dados wide
+dados_wide <- tibble::tibble(
+  aluno = c("Ana", "Bruno"),
+  mat = c(90, 70),
+  port = c(80, 85)
+)
+
+# Convertendo para formato tidy (long)
+dados_tidy <- dados_wide %>%
+  tidyr::pivot_longer(
+    cols = c(mat, port),
+    names_to = "disciplina",
+    values_to = "nota"
+  )
+
+dados_tidy
+```
+
+```{r}
+# Exemplo com dados wide
+dados_wide <- tibble::tibble(
+  aluno = c("Ana", "Bruno"),
+  mat = c(90, 70),
+  port = c(80, 85)
+)
+
+# Convertendo para formato tidy (long)
+dados_tidy <- dados_wide %>%
+  tidyr::pivot_longer(
+    cols = c(mat, port),
+    names_to = "disciplina",
+    values_to = "nota"
+  )
+DT::datatable(dados_tidy)
+```
+
+
+
+
+

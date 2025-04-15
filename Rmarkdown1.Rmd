@@ -1,0 +1,35 @@
+---
+title: "Coimbra"
+output: html_document
+date: "2025-04-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Bolsa Familia de Coimbra - MG
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+library(data.table)
+library(htmlTable)
+library(scales)
+
+mun <- readRDS("Coimbra.Rds")
+
+tb1 <- mun %>% 
+        select(MESCOMPETENCIA, CPF, NOME, VALOR) 
+tb1 <- tb1 %>%
+  mutate(MESCOMPETENCIA = ym(MESCOMPETENCIA),       # converte para data
+         MESCOMPETENCIA = format(MESCOMPETENCIA, "%b/%Y"))  # formata como "Jan/2021"
+tb1$VALOR <- dollar(tb1$VALOR, prefix = "R$", big.mark = ".", decimal.mark = ",")
+# Gerar a tabela SEM numeração de linha
+htmlTable(tb1,
+          header = c("MESCOMPETENCIA", "CPF", "NOME", "VALOR"), # Define os cabeçalhos explicitamente
+          rnames = FALSE                    # ESSA é a chave para não imprimir a numeração!
+)
+
+
+```
+
